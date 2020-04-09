@@ -48,6 +48,7 @@ class SocketServerThread(Thread):
             else:
                 self.commandSock.send(b"501 Syntax error in parameters or arguments.")
                 logging.warning(f"Bad command request by client {self.clientAddress}")
+        self.close()
 
     def USER(self, args):
         user = util.findUser(args[0])
@@ -179,11 +180,26 @@ class SocketServerThread(Thread):
             self.userNotLoggedIn()
             return
         try:
-            with open(os.path.join(self.user.WD, args[0])) as f:
-                pass
+            with open(os.path.join(self.user.WD, args[0]), 'r') as f:
+                content = f.read()
+                client, clientAddr = self.dataSock.accept()
+                client.send(len(content).encode())
+                time.sleep(0.5)
+                client.sendall(content.encode())
+                client.close()
+                self.commandSock.send(b"226 Successful Download.")
         except IOError:
             self.errorHappened(f"Client {self.clientAddress} download unavailable file")
             return
+        except socket.error as e:
+            print(e)
+
+    def sendFile(self, fileContent):
+        pass
+
+    def QUIT(self):
+        self.commandSock.send(b"221 Successful Quit.")
+        self.stop()
 
     def stop(self):
         self.serverUp = False
