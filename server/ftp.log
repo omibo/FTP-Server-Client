@@ -1,8 +1,0 @@
-INFO: 2020-04-09 14:00:13,801 SERVER START.    Command Address:('0.0.0.0', 8000)       Data Address:('0.0.0.0', 8001)
-INFO: 2020-04-09 14:00:18,941 Client with address ('127.0.0.1', 49458) connect to server command address
-INFO: 2020-04-09 14:00:24,165 command 'USER navid' received from client ('127.0.0.1', 49458)
-INFO: 2020-04-09 14:00:27,464 command 'PASS 1234' received from client ('127.0.0.1', 49458)
-INFO: 2020-04-09 14:00:27,464 Client ('127.0.0.1', 49458) logged in successfully
-INFO: 2020-04-09 14:00:29,869 command 'LIST' received from client ('127.0.0.1', 49458)
-INFO: 2020-04-09 14:00:29,870 Client ('127.0.0.1', 49458) get files of directory /Users/omid/Documents/Term 6/Computer Networks/projects/project1/ftp/server
-INFO: 2020-04-09 14:00:33,078 command 'DL a.txt' received from client ('127.0.0.1', 49458)

@@ -1,4 +1,4 @@
-from constants import RECV_LENGTH, SEND_LENGTH
+from constants import *
 from server.user import User
 from utils import util
 
@@ -10,16 +10,29 @@ import os
 import time
 import logging
 
-
 class SocketServerThread(Thread):
-    def __init__(self, clientSock, clientAddress, dataSock):
+    def __init__(self, clientSock, clientAddress, dataSock, configs):
         Thread.__init__(self)
+
         self.commandSock = clientSock
         self.clientAddress = clientAddress
         self.dataSock = dataSock
 
         self.serverUp = True
         self.user = User()
+
+        self.configs = configs
+
+        self.enableAccounting = None
+        self.dataThreshold = None
+
+    def setUserAccounting(self):
+        accountingConfig = self.configs['accounting']
+        self.enableAccounting = accountingConfig['enable']
+        self.dataThreshold = accountingConfig['threshold']
+        for userDict in accountingConfig['users']:
+            if userDict['user'] == self.user.username:
+                self.user.setAccounting(userDict)
 
     def userNotLoggedIn(self):
         self.commandSock.send(b"332 Need account for login.")
@@ -75,6 +88,7 @@ class SocketServerThread(Thread):
         self.user.loggedIn = True
         self.user.rootDirectory = os.getcwd()
         self.user.WD = self.user.rootDirectory
+        self.setUserAccounting()
 
     def PWD(self, args):
         if not self.user.loggedIn:
@@ -175,6 +189,13 @@ class SocketServerThread(Thread):
             self.errorHappened(f"Client {self.clientAddress} cd to unavailable directory")
             return
 
+    def handleUserAccounting(self, fileSize):
+        if self.enableAccounting:
+            if fileSize > self.user.size:
+                return False
+            self.user.size -= fileSize
+        return True
+
     def DL(self, args):
         if not self.user.loggedIn:
             self.userNotLoggedIn()
@@ -182,12 +203,27 @@ class SocketServerThread(Thread):
         try:
             with open(os.path.join(self.user.WD, args[0]), 'r') as f:
                 content = f.read()
+                fileSize = len(content)
+                if not self.handleUserAccounting(fileSize):
+                    self.commandSock.send("425 Can't open data connection.")
+                    logging.info(f"Client {self.clientAddress} does not have enough szie for download file {args[0]}")
+                    return
+
                 client, clientAddr = self.dataSock.accept()
-                client.send(len(content).encode())
-                time.sleep(0.5)
+                client.send(str(fileSize).encode())
+                if self.commandSock.recv(RECV_LENGTH).decode() != CLIENT_AGREE_TO_DOWNLOAD_MSG:
+                    self.errorHappened(f"Client {clientAddr} don't want tp download file")
+                    return
                 client.sendall(content.encode())
                 client.close()
-                self.commandSock.send(b"226 Successful Download.")
+
+                if self.commandSock.recv(RECV_LENGTH).decode() == CLIENT_DOWNLOAD_SUCCESSFULLY:
+                    self.commandSock.send(b"226 Successful Download.")
+                    logging.info(f"file {args[0]} sent to client {clientAddr} successfully.")
+                    return
+                else:
+                    logging.info(f"file {args[0]} sent to client {clientAddr} unsuccessfully.")
+
         except IOError:
             self.errorHappened(f"Client {self.clientAddress} download unavailable file")
             return
@@ -198,8 +234,15 @@ class SocketServerThread(Thread):
         pass
 
     def QUIT(self):
+        if not self.user.loggedIn:
+            self.userNotLoggedIn()
+            return
         self.commandSock.send(b"221 Successful Quit.")
         self.stop()
+
+    def HELP(self, args):
+        self.commandSock.send(b"214\n salammmmmmmmmmmmmmm")
+        logging.info(f"Client {self.clientAddress} get help of server")
 
     def stop(self):
         self.serverUp = False

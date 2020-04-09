@@ -6,6 +6,7 @@ from threading import Thread
 import socket
 import time
 import logging
+import sys
 
 
 class SocketServer(Thread):
@@ -39,7 +40,7 @@ class SocketServer(Thread):
             clientSock, clientAddr = self.commandSock.accept()
             logging.info(f"Client with address {clientAddr} connect to server command address")
             print("Client with address ", clientAddr, " connect to server command address")
-            clientThread = SocketServerThread(clientSock, clientAddr, self.dataSock)
+            clientThread = SocketServerThread(clientSock, clientAddr, self.dataSock, configs)
             self.connectionThreads.append(clientThread)
             clientThread.start()
 
@@ -58,16 +59,19 @@ class SocketServer(Thread):
         self.serverUp = False
 
 
-def main():
-    logging.basicConfig(filename='ftp.log', format='%(levelname)s: %(asctime)s %(message)s', level=logging.INFO)
+def configLogging(loggingConfig):
+    logging.basicConfig(filename=loggingConfig['path'], format='%(levelname)s: %(asctime)s %(message)s',level=logging.INFO)
+    if not loggingConfig['enable']:
+        logging.disable(sys.maxsize)
+
+
+if __name__ == '__main__':
     configs = util.getConfigs()
+    configLogging(configs['logging'])
     server = SocketServer(configs)
     server.setCommandSocket()
     server.setDataSocket()
     server.start()
-    time.sleep(100)
+    time.sleep(300)
     server.stop()
     server.join()
-
-
-main()

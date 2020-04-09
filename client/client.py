@@ -59,13 +59,24 @@ class Client(Thread):
         self.commandSock.send(commandStr.encode())
         self.setDataSocket()
         fileLength = int(self.dataSock.recv(constants.RECV_LENGTH).decode())
-        while True:
-            data = self.dataSock.recv(constants.RECV_LENGTH).decode()
-            if not data:
-                break
-            print(data)
-        print(self.commandSock.recv(constants.RECV_LENGTH).decode())
+        print("length of wanted file ", fileLength)
+        self.commandSock.send(constants.CLIENT_AGREE_TO_DOWNLOAD_MSG.encode())
+        length = 0
+        with open(commandStr.split()[1], "w") as f:
+            while length < fileLength:
+                data = self.dataSock.recv(constants.RECV_LENGTH).decode()
+                length += len(data)
+                if not data:
+                    break
+                f.write(data)
+
         self.dataSock.close()
+        if length != fileLength:
+            self.commandSock.send(constants.CLIENT_DOWNLOAD_UNSUCCESSFUL.encode())
+            print("Can't download file completely")
+        else:
+            self.commandSock.send(constants.CLIENT_DOWNLOAD_SUCCESSFULLY.encode())
+            print(self.commandSock.recv(constants.RECV_LENGTH).decode())
 
     def close(self):
         self.commandSock.close()
