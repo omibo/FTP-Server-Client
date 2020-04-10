@@ -2,6 +2,7 @@ import constants
 from utils import util
 
 from threading import Thread
+import pickle
 import socket, time
 
 
@@ -34,8 +35,12 @@ class Client(Thread):
             elif command[0] == 'DL':
                 self.downloadCommand(commandStr)
             elif commandStr == 'Q':
+                self.justCommandChannel('QUIT')
                 self.close()
                 self.stop()
+            elif commandStr == 'QUIT':
+                self.justCommandChannel(commandStr)
+                self.setCommandSocket()
             else:
                 self.justCommandChannel(commandStr)
 
@@ -45,23 +50,33 @@ class Client(Thread):
 
     def listCommand(self, commandStr):
         self.commandSock.send(commandStr.encode())
+        receiveMsg = self.commandSock.recv(constants.RECV_LENGTH).decode()
+        if receiveMsg != constants.CLIENT_READY_TO_RECEIVE_LIST:
+            print(receiveMsg)
+            return
         self.setDataSocket()
         print("FILES IN YOR WORKING DIRECTORY")
         while True:
-            data = self.dataSock.recv(constants.RECV_LENGTH).decode()
+            data = self.dataSock.recv(constants.RECV_LENGTH)
             if not data:
                 break
-            print(data)
-        print(self.commandSock.recv(constants.RECV_LENGTH).decode())
+            print(pickle.loads(data))
+        lists = self.commandSock.recv(constants.RECV_LENGTH).decode()
+        for listItem in lists.split('-'):
+            print(listItem)
         self.dataSock.close()
 
     def downloadCommand(self, commandStr):
         self.commandSock.send(commandStr.encode())
-        self.setDataSocket()
-        fileLength = int(self.dataSock.recv(constants.RECV_LENGTH).decode())
+        commandAnswere = self.commandSock.recv(constants.RECV_LENGTH).decode()
+        if not commandAnswere.isdigit():
+            print(commandAnswere)
+            return
+        fileLength = int(commandAnswere)
         print("length of wanted file ", fileLength)
         self.commandSock.send(constants.CLIENT_AGREE_TO_DOWNLOAD_MSG.encode())
         length = 0
+        self.setDataSocket()
         with open(commandStr.split()[1], "w") as f:
             while length < fileLength:
                 data = self.dataSock.recv(constants.RECV_LENGTH).decode()
@@ -85,44 +100,6 @@ class Client(Thread):
     def stop(self):
         self.clientUp = False
 
-
-
-
-# with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-#     s.connect((HOST, PORT))
-#     while True:
-#         print(s.recv(1024))
-#         s.send(input().encode())
-
-# s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# s.connect((HOST, PORT))
-#
-# print(s.recv(1024))
-# command = input()
-# s.send(command.encode())
-# print(s.recv(1024))
-# command = input()
-# s.send(command.encode())
-# print(s.recv(1024))
-#
-# command = input()
-# s.send(command.encode())
-#
-# s1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# s1.connect((HOST, 8001))
-# length = s1.recv(1024).decode()
-# print(length)
-# while True:
-#     data = s1.recv(1024)
-#     print(data.decode())
-#     if not data:
-#         break
-#
-# print("JKKJKJKJKJKJKJK")
-# s1.close()
-# print(s.recv(1024))
-# logging.info("CLOSING COMMAND SOCKET CLIENT")
-# s.close()
 
 if __name__ == '__main__':
     configs = util.getConfigs()

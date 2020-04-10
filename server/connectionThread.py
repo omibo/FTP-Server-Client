@@ -4,11 +4,12 @@ from utils import util
 
 from threading import Thread
 from pathlib import Path
+import pickle
 import socket
 import shutil
 import os
-import time
 import logging
+
 
 class SocketServerThread(Thread):
     def __init__(self, clientSock, clientAddress, dataSock, configs):
@@ -26,13 +27,25 @@ class SocketServerThread(Thread):
         self.enableAccounting = None
         self.dataThreshold = None
 
+        self.enableAuth = None
+
     def setUserAccounting(self):
         accountingConfig = self.configs['accounting']
         self.enableAccounting = accountingConfig['enable']
-        self.dataThreshold = accountingConfig['threshold']
+        self.dataThreshold = int(accountingConfig['threshold'])
         for userDict in accountingConfig['users']:
             if userDict['user'] == self.user.username:
                 self.user.setAccounting(userDict)
+
+    def setUserAdministration(self):
+        authConfig = self.configs['authorization']
+        self.enableAuth = authConfig['enable']
+        for user in authConfig['admins']:
+            if user == self.user.username:
+                self.user.isAdmin = True
+                return
+        self.user.isAdmin = False
+        self.user.adminFiles = authConfig['files']
 
     def userNotLoggedIn(self):
         self.commandSock.send(b"332 Need account for login.")
@@ -48,7 +61,7 @@ class SocketServerThread(Thread):
             try:
                 commandMsg = self.commandSock.recv(RECV_LENGTH).decode()
                 if commandMsg == '':
-                    self.stop()
+                    continue
                 logging.info(f"command '{commandMsg}' received from client {self.clientAddress}")
             except socket.error as err:
                 logging.error(f"Error happened in receiving command from client {self.clientAddress}")
@@ -89,6 +102,7 @@ class SocketServerThread(Thread):
         self.user.rootDirectory = os.getcwd()
         self.user.WD = self.user.rootDirectory
         self.setUserAccounting()
+        self.setUserAdministration()
 
     def PWD(self, args):
         if not self.user.loggedIn:
@@ -132,6 +146,7 @@ class SocketServerThread(Thread):
         if len(args) == 1:
             try:
                 path = os.path.join(self.user.WD, args[0])
+                
                 shutil.rmtree(path)
                 self.commandSock.send(b"250 <filename/directory path> deleted.")
                 logging.info(f"Client {self.clientAddress} delete directory {args[0]}")
@@ -139,6 +154,11 @@ class SocketServerThread(Thread):
                 self.errorHappened(f"Client {self.clientAddress} want to delete unavailable dir")
         else:
             try:
+                if not self.handleUserAuth(args[1]):
+                    self.commandSock.send(b"550 File unavailable.")
+                    logging.info(f"Client {self.clientAddress} does not have access to delete the file {args[0]}")
+                    return
+
                 path = os.path.join(self.user.WD, args[1])
                 os.remove(path)
                 self.commandSock.send(b"250 <filename/directory path> deleted.")
@@ -150,15 +170,12 @@ class SocketServerThread(Thread):
         if not self.user.loggedIn:
             self.userNotLoggedIn()
             return
-        try:
-            basePath = Path(self.user.WD)
-            filesInDir = (file.name for file in basePath.iterdir() if file.is_file())
-        except:
-            self.errorHappened(f"Can't get files of directory {self.user.WD}")
-            return
+        self.commandSock.send(CLIENT_READY_TO_RECEIVE_LIST.encode())
+        basePath = Path(self.user.WD)
+        filesInDir = [file.name for file in basePath.iterdir() if file.is_file()]
         client, clientAddr = self.dataSock.accept()
-        for file in filesInDir:
-            client.send(file.encode())
+        sendingStr = pickle.dumps(filesInDir)
+        client.sendall(sendingStr)
         client.close()
         self.commandSock.send(b"226 List transfer done.")
         logging.info(f"Client {self.clientAddress} get files of directory {self.user.WD}")
@@ -194,6 +211,19 @@ class SocketServerThread(Thread):
             if fileSize > self.user.size:
                 return False
             self.user.size -= fileSize
+            if self.user.size < self.dataThreshold:
+                self.sendEmail()
+        return True
+
+    def handleUserAuth(self, fileName):
+        fileName = './' + fileName
+        if self.enableAuth:
+            if self.user.isAdmin:
+                return True
+            if self.user.WD != self.user.rootDirectory:
+                return True
+            if fileName in self.user.adminFiles:
+                return False
         return True
 
     def DL(self, args):
@@ -205,15 +235,18 @@ class SocketServerThread(Thread):
                 content = f.read()
                 fileSize = len(content)
                 if not self.handleUserAccounting(fileSize):
-                    self.commandSock.send("425 Can't open data connection.")
-                    logging.info(f"Client {self.clientAddress} does not have enough szie for download file {args[0]}")
+                    self.commandSock.send(b"425 Can't open data connection.")
+                    logging.info(f"Client {self.clientAddress} does not have enough size for download file {args[0]}")
                     return
-
-                client, clientAddr = self.dataSock.accept()
-                client.send(str(fileSize).encode())
+                if not self.handleUserAuth(args[0]):
+                    self.commandSock.send(b"550 File unavailable.")
+                    logging.info(f"Client {self.clientAddress} does not have access to download the file {args[0]}")
+                    return
+                self.commandSock.send(str(fileSize).encode())
                 if self.commandSock.recv(RECV_LENGTH).decode() != CLIENT_AGREE_TO_DOWNLOAD_MSG:
-                    self.errorHappened(f"Client {clientAddr} don't want tp download file")
+                    self.errorHappened(f"Client {self.clientAddress} don't want tp download file")
                     return
+                client, clientAddr = self.dataSock.accept()
                 client.sendall(content.encode())
                 client.close()
 
@@ -230,14 +263,12 @@ class SocketServerThread(Thread):
         except socket.error as e:
             print(e)
 
-    def sendFile(self, fileContent):
-        pass
-
-    def QUIT(self):
+    def QUIT(self, args):
         if not self.user.loggedIn:
             self.userNotLoggedIn()
             return
         self.commandSock.send(b"221 Successful Quit.")
+        logging.info(f"Client {self.clientAddress} logged out")
         self.stop()
 
     def HELP(self, args):
@@ -248,5 +279,5 @@ class SocketServerThread(Thread):
         self.serverUp = False
 
     def close(self):
-        print('Closing clientSocket')
+        logging.info(f"Connection by {self.clientAddress} closed")
         self.commandSock.close()

@@ -34,12 +34,10 @@ class SocketServer(Thread):
 
     def run(self):
         logging.info(f'SERVER START.    Command Address:{self.commandAddress}       Data Address:{self.dataAddress}')
-        print(f'SERVER START.    Command Address:{self.commandAddress}       Data Address:{self.dataAddress}')
 
         while self.serverUp:
             clientSock, clientAddr = self.commandSock.accept()
             logging.info(f"Client with address {clientAddr} connect to server command address")
-            print("Client with address ", clientAddr, " connect to server command address")
             clientThread = SocketServerThread(clientSock, clientAddr, self.dataSock, configs)
             self.connectionThreads.append(clientThread)
             clientThread.start()
