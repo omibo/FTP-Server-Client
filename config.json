@@ -3,11 +3,11 @@
   "dataChannelPort":8001,
   "users": [
     {
-      "user": "navid",
+      "user": "omid",
       "password": "1234"
     },
     {
-      "user": "farzad",
+      "user": "mobina",
       "password": "5678"
     }
   ],
@@ -16,15 +16,15 @@
     "threshold": 100,
     "users": [
       {
-        "user": "navid",
-        "size": "12000",
-        "email": "navid@akbari.com",
+        "user": "omid",
+        "size": "150000000",
+        "email": "omid.bodaghi79@gmail.com",
         "alert": true
       },
       {
-        "user": "farzad",
-        "size": "150000000",
-        "email": "farzad@ahabibi.com",
+        "user": "mobina",
+        "size": "1400",
+        "email": "shbmobina@gmail.com",
         "alert": false
       }
     ]
@@ -36,12 +36,12 @@
   "authorization": {
     "enable": true,
     "admins": [
-      "farzad"
+      "omid"
     ],
     "files": [
       "./config.json",
       "./example.png"
     ]
   }
-    
+
 }

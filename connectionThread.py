@@ -49,7 +49,7 @@ class ConnectionThread(Thread):
 
     def userNotLoggedIn(self):
         self.commandSock.send(b"332 Need account for login.")
-        logging.warning(f"Client {self.clientAddress} want PWD without login")
+        logging.warning(f"Client {self.clientAddress} proceeded to do PWD without login")
 
     def errorHappened(self, msg):
         self.commandSock.send(b"500 Error.")
@@ -62,7 +62,7 @@ class ConnectionThread(Thread):
                 commandMsg = self.commandSock.recv(RECV_LENGTH).decode()
                 if commandMsg == '':
                     continue
-                logging.info(f"command '{commandMsg}' received from client {self.clientAddress}")
+                logging.info(f"Command '{commandMsg}' received from client {self.clientAddress}")
             except socket.error as err:
                 logging.error(f"Error happened in receiving command from client {self.clientAddress}")
                 continue
@@ -80,7 +80,7 @@ class ConnectionThread(Thread):
         user = util.findUser(args[0])
         if user is None:
             self.commandSock.send(b"430 Invalid username or password.")
-            logging.info(f"Invalid username by client {self.clientAddress}")
+            logging.info(f"Invalid username entered by client {self.clientAddress}")
             return
 
         self.user.username, self.user.password = user['user'], user['password']
@@ -93,7 +93,7 @@ class ConnectionThread(Thread):
 
         elif args[0] != self.user.password:
             self.commandSock.send(b"430 Invalid username or password.")
-            logging.info(f"Invalid password by client {self.clientAddress}")
+            logging.info(f"Invalid password enetered by client {self.clientAddress}")
             return
 
         self.commandSock.send(b"230 User logged in, proceed.")
@@ -111,11 +111,11 @@ class ConnectionThread(Thread):
         if self.user.WD is None:
             self.user.WD = self.user.rootDirectory
         if not os.path.exists(self.user.WD):
-            self.errorHappened(f"Client {self.clientAddress} is in unavailable directory")
-            self.user.WD = self.user.rootDirectorys
+            self.errorHappened(f"Client {self.clientAddress} is in an unavailable directory")
+            self.user.WD = self.user.rootDirectory
             return
         self.commandSock.send(f"257 {self.user.WD}".encode())
-        logging.info(f"Client {self.clientAddress} get his PWD:{self.user.WD}")
+        logging.info(f"Client {self.clientAddress} got PWD:{self.user.WD}")
 
     def MKD(self, args):
         if not self.user.loggedIn:
@@ -126,18 +126,18 @@ class ConnectionThread(Thread):
                 path = os.path.join(self.user.WD, args[0])
                 os.mkdir(path)
                 self.commandSock.send(b"257 <filename/directory path> created.")
-                logging.info(f"Client {self.clientAddress} create new directory:{args[0]}")
+                logging.info(f"Client {self.clientAddress} created new directory:{args[0]}")
             except FileExistsError or OSError:
-                self.errorHappened(f"Client {self.clientAddress} create existing dir")
+                self.errorHappened(f"Client {self.clientAddress} proceeds to create an existing dir")
         else:
             try:
                 path = os.path.join(self.user.WD, args[1])
                 f = open(path, "x");
                 f.close()
                 self.commandSock.send(b"257 <filename/directory path> created.")
-                logging.info(f"Client {self.clientAddress} create new file:{args[1]}")
+                logging.info(f"Client {self.clientAddress} created new file:{args[1]}")
             except FileExistsError or OSError:
-                self.errorHappened(f"Client {self.clientAddress} want to create existing file")
+                self.errorHappened(f"Client {self.clientAddress} proceeds to create an existing file")
 
     def RMD(self, args):
         if not self.user.loggedIn:
@@ -146,25 +146,24 @@ class ConnectionThread(Thread):
         if len(args) == 1:
             try:
                 path = os.path.join(self.user.WD, args[0])
-                
                 shutil.rmtree(path)
                 self.commandSock.send(b"250 <filename/directory path> deleted.")
-                logging.info(f"Client {self.clientAddress} delete directory {args[0]}")
+                logging.info(f"Client {self.clientAddress} deleted directory {args[0]}")
             except OSError:
-                self.errorHappened(f"Client {self.clientAddress} want to delete unavailable dir")
+                self.errorHappened(f"Client {self.clientAddress} proceeds to delete unavailable dir")
         else:
             try:
                 if not self.handleUserAuth(args[1]):
                     self.commandSock.send(b"550 File unavailable.")
-                    logging.info(f"Client {self.clientAddress} does not have access to delete the file {args[0]}")
+                    logging.info(f"Client {self.clientAddress} does not have access to delete file {args[0]}")
                     return
 
                 path = os.path.join(self.user.WD, args[1])
                 os.remove(path)
                 self.commandSock.send(b"250 <filename/directory path> deleted.")
-                logging.info(f"Client {self.clientAddress} delete file {args[1]}")
+                logging.info(f"Client {self.clientAddress} deleted file {args[1]}")
             except OSError:
-                self.errorHappened(f"Client {self.clientAddress} want to delete unavailable file")
+                self.errorHappened(f"Client {self.clientAddress} proceeds to delete an unavailable file")
 
     def LIST(self, args):
         if not self.user.loggedIn:
@@ -178,7 +177,7 @@ class ConnectionThread(Thread):
         client.sendall(sendingStr)
         client.close()
         self.commandSock.send(b"226 List transfer done.")
-        logging.info(f"Client {self.clientAddress} get files of directory {self.user.WD}")
+        logging.info(f"Client {self.clientAddress} got list of directory {self.user.WD}")
 
     def CWD(self, args):
         if not self.user.loggedIn:
@@ -188,22 +187,22 @@ class ConnectionThread(Thread):
         if len(args) == 0:
             self.user.WD = self.user.rootDirectory
             self.commandSock.send(b"250 Successful Change.")
-            logging.info(f"Client {self.clientAddress} change his directory to root")
+            logging.info(f"Client {self.clientAddress} changed the directory to root")
 
         elif args[0] == '..':
             if self.user.WD == self.user.rootDirectory:
-                self.errorHappened(f"Client {self.clientAddress} is in root. Can't do 'cd ..'")
+                self.errorHappened(f"Client {self.clientAddress} is in root. Can not proceed 'cd ..'")
                 return
             self.user.WD = Path(self.user.WD).parent
             self.commandSock.send(b"250 Successful Change.")
-            logging.info(f"Client {self.clientAddress} change his directory to parent directory")
+            logging.info(f"Client {self.clientAddress} changed the directory to the parent directory")
 
         elif os.path.exists(os.path.join(self.user.WD, args[0])):
             self.user.WD = os.path.join(self.user.WD, args[0])
             self.commandSock.send(b"250 Successful Change.")
-            logging.info(f"Client {self.clientAddress} change his directory to {self.user.WD}")
+            logging.info(f"Client {self.clientAddress} changed the directory to {self.user.WD}")
         else:
-            self.errorHappened(f"Client {self.clientAddress} cd to unavailable directory")
+            self.errorHappened(f"Client {self.clientAddress} changed the directory to an unavailable path")
             return
 
     def handleUserAccounting(self, fileSize):
@@ -212,8 +211,12 @@ class ConnectionThread(Thread):
                 return False
             self.user.size -= fileSize
             if self.user.size < self.dataThreshold:
-                self.sendEmail()
+                self.sendEmail(self.user.email)
         return True
+
+    def sendEmail(self, userEmail):
+        mailserver = ("mail.ut.ac.ir", 587)
+        util.sendEmailUtil(mailserver, "ut.ac.ir", userEmail, "omid", "1234")
 
     def handleUserAuth(self, fileName):
         fileName = './' + fileName
@@ -234,17 +237,17 @@ class ConnectionThread(Thread):
             with open(os.path.join(self.user.WD, args[0]), 'r') as f:
                 content = f.read()
                 fileSize = len(content)
-                if not self.handleUserAccounting(fileSize):
-                    self.commandSock.send(b"425 Can't open data connection.")
-                    logging.info(f"Client {self.clientAddress} does not have enough size for download file {args[0]}")
-                    return
                 if not self.handleUserAuth(args[0]):
                     self.commandSock.send(b"550 File unavailable.")
                     logging.info(f"Client {self.clientAddress} does not have access to download the file {args[0]}")
                     return
+                if not self.handleUserAccounting(fileSize):
+                    self.commandSock.send(b"425 Can't open data connection.")
+                    logging.info(f"Client {self.clientAddress} does not have enough available size to download the file {args[0]}")
+                    return
                 self.commandSock.send(str(fileSize).encode())
                 if self.commandSock.recv(RECV_LENGTH).decode() != CLIENT_AGREE_TO_DOWNLOAD_MSG:
-                    self.errorHappened(f"Client {self.clientAddress} don't want tp download file")
+                    self.errorHappened(f"Client {self.clientAddress} does not agree to download file")
                     return
                 client, clientAddr = self.dataSock.accept()
                 client.sendall(content.encode())
@@ -252,13 +255,13 @@ class ConnectionThread(Thread):
 
                 if self.commandSock.recv(RECV_LENGTH).decode() == CLIENT_DOWNLOAD_SUCCESSFULLY:
                     self.commandSock.send(b"226 Successful Download.")
-                    logging.info(f"file {args[0]} sent to client {clientAddr} successfully.")
+                    logging.info(f"file {args[0]} has been successfully sent to client {clientAddr}")
                     return
                 else:
-                    logging.info(f"file {args[0]} sent to client {clientAddr} unsuccessfully.")
+                    logging.info(f"file {args[0]} has not been sent to client {clientAddr}")
 
         except IOError:
-            self.errorHappened(f"Client {self.clientAddress} download unavailable file")
+            self.errorHappened(f"Client {self.clientAddress} proceeds to download an unavailable file.")
             return
         except socket.error as e:
             print(e)
@@ -272,12 +275,12 @@ class ConnectionThread(Thread):
         self.stop()
 
     def HELP(self, args):
-        self.commandSock.send(b"214\n salammmmmmmmmmmmmmm")
-        logging.info(f"Client {self.clientAddress} get help of server")
+        self.commandSock.send(b"214\nUSER [name], Its argument is used to specify the user's name. It is used for user authentication.\nPASS [password], Its argument is used to specify the user's password. It is used for user authentication.\nPWD, It is used to print out the current working directory.\nMKD [flag] [path], Its first argument represents the type, '-i' for a new file and none for a new directory. Its second argument is used to specify the path and name of the file/directory. It is used to create a new file or directory.\nRMD [flag] [path], Its first argument represents the type, '-f' for a directory and none for a file. Its second argument is used to specify the path and name of the file/directory. It is used to remove a file or directory.\nLIST, It is used to print out the list of files/directories in current working directory.\nCWD [path], Its argument is used to specify the path. It is used to change the current working directory to a desired path.\nDL [name], Its argument is used to specify the file's name. It is used to download a file.\nHELP, It is used to print out the list of available commands and their details.\nQUIT, It is used to log out from the server.\n")
+        logging.info(f"Client {self.clientAddress} got the help message from the server")
 
     def stop(self):
         self.serverUp = False
 
     def close(self):
-        logging.info(f"Connection by {self.clientAddress} closed")
+        logging.info(f"Connection by {self.clientAddress} got closed")
         self.commandSock.close()
