@@ -95,7 +95,6 @@ class Client(Thread):
 
     def close(self):
         self.commandSock.close()
-        self.dataSock.close()
 
     def stop(self):
         self.clientUp = False

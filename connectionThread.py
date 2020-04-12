@@ -1,5 +1,5 @@
 from constants import *
-from server.user import User
+from user import User
 from utils import util
 
 from threading import Thread
@@ -11,7 +11,7 @@ import os
 import logging
 
 
-class SocketServerThread(Thread):
+class ConnectionThread(Thread):
     def __init__(self, clientSock, clientAddress, dataSock, configs):
         Thread.__init__(self)
 

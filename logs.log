@@ -43,3 +43,41 @@ WARNING: 2020-04-10 20:03:44,064 Client ('127.0.0.1', 49778) want PWD without lo
 INFO: 2020-04-10 20:03:47,540 command 'PWD' received from client ('127.0.0.1', 49778)
 WARNING: 2020-04-10 20:03:47,540 Client ('127.0.0.1', 49778) want PWD without login
 INFO: 2020-04-10 20:03:52,047 command 'USER farzad' received from client ('127.0.0.1', 49778)
+INFO: 2020-04-12 02:54:32,030 SERVER START.    Command Address:('0.0.0.0', 8000)       Data Address:('0.0.0.0', 8001)
+INFO: 2020-04-12 13:35:10,298 SERVER START.    Command Address:('0.0.0.0', 8000)       Data Address:('0.0.0.0', 8001)
+INFO: 2020-04-12 13:37:04,486 SERVER START.    Command Address:('0.0.0.0', 8000)       Data Address:('0.0.0.0', 8001)
+INFO: 2020-04-12 13:37:12,279 Client with address ('127.0.0.1', 49880) connect to server command address
+INFO: 2020-04-12 13:37:17,162 command 'PWD' received from client ('127.0.0.1', 49880)
+WARNING: 2020-04-12 13:37:17,162 Client ('127.0.0.1', 49880) want PWD without login
+INFO: 2020-04-12 13:37:24,660 Client with address ('127.0.0.1', 49881) connect to server command address
+INFO: 2020-04-12 13:37:29,117 command 'USER navid' received from client ('127.0.0.1', 49880)
+INFO: 2020-04-12 13:37:32,899 command 'PASS 1234' received from client ('127.0.0.1', 49881)
+INFO: 2020-04-12 13:37:44,677 command 'USER farzad' received from client ('127.0.0.1', 49881)
+INFO: 2020-04-12 13:37:49,543 command 'PASS 1234' received from client ('127.0.0.1', 49880)
+INFO: 2020-04-12 13:37:49,543 Client ('127.0.0.1', 49880) logged in successfully
+INFO: 2020-04-12 13:37:53,247 command 'PWD' received from client ('127.0.0.1', 49881)
+WARNING: 2020-04-12 13:37:53,247 Client ('127.0.0.1', 49881) want PWD without login
+INFO: 2020-04-12 13:37:57,808 command 'PASS 5678' received from client ('127.0.0.1', 49881)
+INFO: 2020-04-12 13:37:57,808 Client ('127.0.0.1', 49881) logged in successfully
+INFO: 2020-04-12 13:38:02,075 command 'PWD' received from client ('127.0.0.1', 49880)
+INFO: 2020-04-12 13:38:02,076 Client ('127.0.0.1', 49880) get his PWD:/Users/omid/Documents/Term 6/Computer Networks/projects/project1/ftp
+INFO: 2020-04-12 13:38:08,780 command 'MKD ali' received from client ('127.0.0.1', 49880)
+INFO: 2020-04-12 13:38:08,780 Client ('127.0.0.1', 49880) create new directory:ali
+INFO: 2020-04-12 13:38:13,409 command 'CWD ali' received from client ('127.0.0.1', 49880)
+INFO: 2020-04-12 13:38:13,410 Client ('127.0.0.1', 49880) change his directory to /Users/omid/Documents/Term 6/Computer Networks/projects/project1/ftp/ali
+INFO: 2020-04-12 13:38:15,594 command 'PWD' received from client ('127.0.0.1', 49880)
+INFO: 2020-04-12 13:38:15,594 Client ('127.0.0.1', 49880) get his PWD:/Users/omid/Documents/Term 6/Computer Networks/projects/project1/ftp/ali
+INFO: 2020-04-12 13:38:19,096 command 'PWD' received from client ('127.0.0.1', 49881)
+INFO: 2020-04-12 13:38:19,096 Client ('127.0.0.1', 49881) get his PWD:/Users/omid/Documents/Term 6/Computer Networks/projects/project1/ftp
+INFO: 2020-04-12 13:38:24,056 command 'QUIT' received from client ('127.0.0.1', 49880)
+INFO: 2020-04-12 13:38:24,056 Client ('127.0.0.1', 49880) logged out
+INFO: 2020-04-12 13:38:24,056 Connection by ('127.0.0.1', 49880) closed
+INFO: 2020-04-12 13:38:24,057 Client with address ('127.0.0.1', 49883) connect to server command address
+INFO: 2020-04-12 13:38:27,439 command 'QUIT' received from client ('127.0.0.1', 49881)
+INFO: 2020-04-12 13:38:27,439 Client ('127.0.0.1', 49881) logged out
+INFO: 2020-04-12 13:38:27,440 Connection by ('127.0.0.1', 49881) closed
+INFO: 2020-04-12 13:38:27,440 Client with address ('127.0.0.1', 49884) connect to server command address
+INFO: 2020-04-12 13:38:28,409 command 'QUIT' received from client ('127.0.0.1', 49884)
+WARNING: 2020-04-12 13:38:28,410 Client ('127.0.0.1', 49884) want PWD without login
+INFO: 2020-04-12 13:38:31,737 command 'QUIT' received from client ('127.0.0.1', 49883)
+WARNING: 2020-04-12 13:38:31,737 Client ('127.0.0.1', 49883) want PWD without login

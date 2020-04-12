@@ -1,4 +1,4 @@
-from server.connectionThread import SocketServerThread
+from connectionThread import ConnectionThread
 from utils import util
 import constants
 
@@ -38,7 +38,7 @@ class SocketServer(Thread):
         while self.serverUp:
             clientSock, clientAddr = self.commandSock.accept()
             logging.info(f"Client with address {clientAddr} connect to server command address")
-            clientThread = SocketServerThread(clientSock, clientAddr, self.dataSock, configs)
+            clientThread = ConnectionThread(clientSock, clientAddr, self.dataSock, configs)
             self.connectionThreads.append(clientThread)
             clientThread.start()
 
@@ -70,6 +70,7 @@ if __name__ == '__main__':
     server.setCommandSocket()
     server.setDataSocket()
     server.start()
-    time.sleep(300)
-    server.stop()
-    server.join()
+    if not server.serverUp:
+        server.stop()
+        server.join()
+    
