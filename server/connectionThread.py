@@ -1,5 +1,5 @@
-from constants import *
-from user import User
+from globals.constants import *
+from server.user import User
 from utils import util
 
 from threading import Thread
@@ -125,7 +125,7 @@ class ConnectionThread(Thread):
             try:
                 path = os.path.join(self.user.WD, args[0])
                 os.mkdir(path)
-                self.commandSock.send(b"257 <filename/directory path> created.")
+                self.commandSock.send(b"257 " + args[0].encode() + b" created.")
                 logging.info(f"Client {self.clientAddress} created new directory:{args[0]}")
             except FileExistsError or OSError:
                 self.errorHappened(f"Client {self.clientAddress} proceeds to create an existing dir")
@@ -134,7 +134,7 @@ class ConnectionThread(Thread):
                 path = os.path.join(self.user.WD, args[1])
                 f = open(path, "x");
                 f.close()
-                self.commandSock.send(b"257 <filename/directory path> created.")
+                self.commandSock.send(b"257 " + args[1].encode() + b" created.")
                 logging.info(f"Client {self.clientAddress} created new file:{args[1]}")
             except FileExistsError or OSError:
                 self.errorHappened(f"Client {self.clientAddress} proceeds to create an existing file")
@@ -143,25 +143,25 @@ class ConnectionThread(Thread):
         if not self.user.loggedIn:
             self.userNotLoggedIn()
             return
-        if len(args) == 1:
+        if len(args) == 2:
             try:
-                path = os.path.join(self.user.WD, args[0])
+                path = os.path.join(self.user.WD, args[1])
                 shutil.rmtree(path)
-                self.commandSock.send(b"250 <filename/directory path> deleted.")
-                logging.info(f"Client {self.clientAddress} deleted directory {args[0]}")
+                self.commandSock.send(b"250 " + args[1].encode() + b" deleted.")
+                logging.info(f"Client {self.clientAddress} deleted directory {args[1]}")
             except OSError:
                 self.errorHappened(f"Client {self.clientAddress} proceeds to delete unavailable dir")
         else:
             try:
-                if not self.handleUserAuth(args[1]):
+                if not self.handleUserAuth(args[0]):
                     self.commandSock.send(b"550 File unavailable.")
                     logging.info(f"Client {self.clientAddress} does not have access to delete file {args[0]}")
                     return
 
                 path = os.path.join(self.user.WD, args[1])
                 os.remove(path)
-                self.commandSock.send(b"250 <filename/directory path> deleted.")
-                logging.info(f"Client {self.clientAddress} deleted file {args[1]}")
+                self.commandSock.send(b"250 " + args[0].encode() + b" deleted.")
+                logging.info(f"Client {self.clientAddress} deleted file {args[0]}")
             except OSError:
                 self.errorHappened(f"Client {self.clientAddress} proceeds to delete an unavailable file")
 

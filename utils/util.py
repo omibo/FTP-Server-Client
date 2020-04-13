@@ -1,4 +1,4 @@
-from constants import SERVER_COMMANDS
+from globals.constants import *
 from socket import socket, AF_INET, SOCK_STREAM
 import base64
 import json

@@ -1,10 +1,9 @@
-from connectionThread import ConnectionThread
+from server.connectionThread import ConnectionThread
 from utils import util
-import constants
+from globals import constants
 
 from threading import Thread
 import socket
-import time
 import logging
 import sys
 
@@ -70,7 +69,6 @@ if __name__ == '__main__':
     server.setCommandSocket()
     server.setDataSocket()
     server.start()
-    if not server.serverUp:
+    if input() == 'Q':
         server.stop()
         server.join()
-    

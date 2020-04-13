@@ -1,7 +1,8 @@
-import constants
+from globals import constants
 from utils import util
 
 from threading import Thread
+import os
 import pickle
 import socket, time
 
@@ -77,7 +78,7 @@ class Client(Thread):
         self.commandSock.send(constants.CLIENT_AGREE_TO_DOWNLOAD_MSG.encode())
         length = 0
         self.setDataSocket()
-        with open(commandStr.split()[1], "w") as f:
+        with open(os.path.join(os.getcwd() + '/clientFolder', commandStr.split()[1]), "w") as f:
             while length < fileLength:
                 data = self.dataSock.recv(constants.RECV_LENGTH).decode()
                 length += len(data)
